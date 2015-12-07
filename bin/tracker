@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << File.expand_path('../..', __FILE__)
+
+require 'config/boot'
+require 'thor'
+require 'sequel'
+
+class TrackerCLI < Thor
+  desc 'migrate', 'Run migrations'
+  option :version, type: :numeric
+  def migrate
+    Sequel.extension :migration
+    db = Sequel.connect(ENV.fetch('DATABASE_URL'))
+    if options[:version]
+      puts "Migrating to version #{options[:version]}"
+      Sequel::Migrator.run(db, "db/migrations", target: options[:version].to_i)
+    else
+      puts "Migrating to latest"
+      Sequel::Migrator.run(db, "db/migrations")
+    end
+  end
+end
+
+TrackerCLI.start(ARGV)
